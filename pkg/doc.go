@@ -43,6 +43,20 @@ First the source image should be converted to grayscale mode, then the cascade f
 	// Calculate the intersection over union (IoU) of two clusters.
 	dets = classifier.ClusterDetections(dets, 0.2)
 
+The detected faces can be anonymized (pixelated or blurred) on a copy of the
+source image without altering the original. AnonymizeDetections accepts the
+detection results directly, while Anonymize works with caller-provided
+rectangles. Both preserve the image dimensions, the alpha channel and every
+pixel outside the anonymization regions; overlapping regions are merged and
+processed once, and a whitelist can exclude pixels from anonymization.
+
+	dst, err := pigo.AnonymizeDetections(src, dets, pigo.AnonymizeConfig{
+		Method:        pigo.Pixelate, // or pigo.Blur
+		BlockSize:     12,
+		Margin:        4,
+		MinConfidence: 5.0,
+	})
+
 For pupil/eyes localization and facial landmark points detection API example check the source code.
 */
 package pigo
