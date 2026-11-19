@@ -59,6 +59,26 @@ Check out this real time demo: https://github.com/esimov/pigo/tree/master/exampl
 
 ![flp_example](https://user-images.githubusercontent.com/883386/66802771-3b0cc880-ef26-11e9-9ee3-7e9e981ef3f7.png)
 
+## Face alignment
+Head pose varies between avatars and photos, so subsequent recognition usually needs the eyes at fixed coordinates. `AlignFace` rotates, scales and crops the source image using the left/right eye points (from the pupil localization step above) and returns the aligned image together with the affine matrix mapping source coordinates to output coordinates.
+
+```Go
+aligned, matrix, err := pigo.AlignFace(src, pigo.AlignOptions{
+	Face:              image.Rect(face.Col-face.Scale/2, face.Row-face.Scale/2, face.Col+face.Scale/2, face.Row+face.Scale/2),
+	LeftEye:           pigo.Point{X: float64(leftEye.Col), Y: float64(leftEye.Row)},
+	RightEye:          pigo.Point{X: float64(rightEye.Col), Y: float64(rightEye.Row)},
+	TargetEyeDistance: 70,              // eyes are TargetEyeDistance pixels apart in the output
+	Width:             112,
+	Height:            112,
+	Background:        color.Transparent, // nil (transparent) is the default
+})
+
+// matrix.Apply(pigo.Point{X: ..., Y: ...}) == aligned-image coordinates
+// inverse, _ := matrix.Invert() // output coordinates back to the source
+```
+
+The eye midpoint is mapped to `EyeAnchor`, or to the output center when it is omitted. Both `Bilinear` (default) and `NearestNeighbor` sampling are supported, along with images whose `Bounds().Min` is not the origin and gray/RGBA sources. The source image and the detection results are never modified. Invalid input (coincident/reversed eyes, eyes outside the face rectangle, non-finite coordinates, zero-sized output or a degenerate transform) returns a typed error from the `ErrAlign*` set, testable with `errors.Is`.
+
 ## Install
 Install Go, set your `GOPATH`, and make sure `$GOPATH/bin` is on your `PATH`.
 
